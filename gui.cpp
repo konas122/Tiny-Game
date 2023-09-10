@@ -5,11 +5,14 @@
 #include <chrono>
 #include <thread>
 #include <SDL2/SDL.h>
+#include <iostream>
 
 #include "utils.h"
 #include "tinyDoom.h"
 #include "textures.h"
 
+int height = 512;
+int width = height * 2;
 
 int main(int argc, char *argv[]) {
     if (SDL_Init(SDL_INIT_VIDEO)) {
@@ -17,7 +20,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    FrameBuffer fb{1024, 512, std::vector<uint32_t>(1024*512, pack_color(255, 255, 255))};
+    FrameBuffer fb{static_cast<size_t>(width), static_cast<size_t>(height), std::vector<uint32_t>(width*height, pack_color(255, 255, 255))};
     GameState gs{ Map(),                                // game map
                   { 3.456, 2.345, 1.523, M_PI / 3., 0, 0 }, // player
                   { {3.523, 3.812, 2, 0},               // monsters lists
@@ -47,13 +50,15 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    int mouseX = 0, mouseY = 0;
+
     auto t1 = std::chrono::high_resolution_clock::now();
     while(1) {
         {   // sleep if less than 20 ms since last re-rendering; TODO: decouple rendering and event polling frequencies
             auto t2 = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double, std::milli> fp_ms = t2 - t1;
             if (fp_ms.count() < 8) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(3));
+                std::this_thread::sleep_for(std::chrono::milliseconds(6));
                 continue;
             }
             t1 = t2;
@@ -68,6 +73,13 @@ int main(int argc, char *argv[]) {
                         gs.player.turn = 0;
                     if ('w'==event.key.keysym.sym || 's'==event.key.keysym.sym)
                         gs.player.walk = 0;
+                }
+                if (event.type == SDL_MOUSEMOTION) {
+                    int a = (event.motion.x - mouseX) / (height / 40);
+                    std::cerr << a << std::endl;
+                    gs.player.turn = a;
+                    mouseX = event.motion.x;
+                    mouseY = event.motion.y;
                 }
                 if (SDL_KEYDOWN==event.type) {
                     if ('a'==event.key.keysym.sym)

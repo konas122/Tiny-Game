@@ -35,3 +35,6 @@
 .vscode/
 build/
 VSCleaner.bat
+
+.vs/
+.idea/
